@@ -1,4 +1,4 @@
 window.SUPABASE_CONFIG = {
   url: 'https://nghqceayxjoqrpqbknqs.supabase.co/rest/v1/',
-  anonKey: 'sb_publishable_2A7-2tEJkifk4axyoA1LaA_On2JVrG8'
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5naHFjZWF5eGpvcXJwcWJrbnFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUzNjE4ODQsImV4cCI6MjExMDkzNzg4NH0.t6bbJPur7Vrug8T0oALExtRWi9YUgJAMYqaxwzKp9Bs'
 };
