@@ -266,6 +266,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return l ? l.name : 'Ingen lokation';
   }
 
+  async function adjustStock(partId, delta) {
+    const part = catalogData.parts.find(p => p.id === partId);
+    if (!part) return;
+
+    const currentStock = Math.max(0, Number(part.stock || 0));
+    const nextStock = Math.max(0, currentStock + delta);
+
+    if (nextStock === currentStock) {
+      showToast('Lagerantallet er allerede 0');
+      return;
+    }
+
+    const { error } = await db
+      .from('parts')
+      .update({ stock: nextStock })
+      .eq('id', partId);
+
+    if (error) {
+      return alert('Fejl ved opdatering af lagerantal: ' + error.message);
+    }
+
+    part.stock = nextStock;
+    if (Number(editPartId.value) === partId) {
+      partStock.value = String(nextStock);
+    }
+
+    renderPartsList();
+    showToast(`${part.partNumber}: ${nextStock} stk. på lager`);
+  }
+
   function renderPartsList() {
     const q = adminSearch.value.trim().toLowerCase();
     adminPartCount.textContent = String(catalogData.parts.length);
@@ -289,9 +319,27 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="admin-row">
         <div>
           <strong>${esc(part.partNumber)} – ${esc(part.name)}</strong>
-          <small>${esc(getBrandName(part.brand))} • 📍 ${esc(getLocName(part.location))} • ${Number(part.stock || 0)} stk.</small>
+          <small>${esc(getBrandName(part.brand))} • 📍 ${esc(getLocName(part.location))}</small>
         </div>
         <div class="row-btns">
+          <div class="stock-step-group" role="group" aria-label="Juster lagerantal for ${esc(part.name)}">
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm stock-step-btn"
+              data-step-id="${part.id}"
+              data-delta="-1"
+              ${Number(part.stock || 0) <= 0 ? 'disabled' : ''}
+              title="Træk 1 fra lager"
+            >&minus;1</button>
+            <span class="stock-count-badge">${Number(part.stock || 0)} stk.</span>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm stock-step-btn"
+              data-step-id="${part.id}"
+              data-delta="1"
+              title="Læg 1 til lager"
+            >+1</button>
+          </div>
           <button type="button" class="btn btn-secondary btn-sm" data-edit-id="${part.id}">Rediger</button>
           <button type="button" class="btn btn-danger btn-sm" data-del-id="${part.id}">Slet</button>
         </div>
@@ -387,6 +435,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   adminPartsList.addEventListener('click', async (e) => {
+    const stepBtn = e.target.closest('[data-step-id]');
+    if (stepBtn) {
+      const id = Number(stepBtn.dataset.stepId);
+      const delta = Number(stepBtn.dataset.delta);
+      await adjustStock(id, delta);
+      return;
+    }
+
     const editBtn = e.target.closest('[data-edit-id]');
     if (editBtn) {
       loadForEdit(Number(editBtn.dataset.editId));
