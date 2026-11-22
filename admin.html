@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – AutoDele</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </span>
+        <span><span class="brand-accent">AUTO</span>DELE <span class="admin-badge">ADMIN</span></span>
+      </a>
+      <nav class="topbar-nav">
+        <a href="index.html" class="btn btn-secondary btn-sm">&larr; Tilbage til katalog</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container admin-container">
+    <!-- Data værktøjslinje -->
+    <section class="admin-banner">
+      <div>
+        <h1>Administration af lager &amp; katalog</h1>
+        <p id="storageStatus">Indlæser data...</p>
+      </div>
+      <div class="admin-banner-actions">
+        <button type="button" id="downloadJsonBtn" class="btn btn-primary">Download parts.json</button>
+        <button type="button" id="triggerImportBtn" class="btn btn-secondary">Importer parts.json</button>
+        <input type="file" id="importJsonInput" accept=".json,application/json" class="hidden">
+        <button type="button" id="resetStorageBtn" class="btn btn-danger">Nulstil til original fil</button>
+      </div>
+    </section>
+
+    <!-- Faner -->
+    <div class="admin-tabs">
+      <button type="button" id="tabBtnParts" class="tab-btn active">1. Reservedele</button>
+      <button type="button" id="tabBtnTaxonomy" class="tab-btn">2. Mærker, Kategorier &amp; Lokationer</button>
+    </div>
+
+    <!-- FANE 1: Reservedele -->
+    <div id="tabPanelParts" class="tab-panel">
+      <div class="admin-split">
+        <!-- Formular -->
+        <section class="card-panel">
+          <h2 id="formTitle">Tilføj ny reservedel</h2>
+          <form id="partForm" class="form-layout">
+            <input type="hidden" id="editIndex" value="-1">
+
+            <div class="form-row-2">
+              <div class="control-group">
+                <label for="partNumber">Varenummer *</label>
+                <input type="text" id="partNumber" required placeholder="F.eks. 1K0698151">
+              </div>
+
+              <div class="control-group">
+                <label for="partStock">Antal på lager *</label>
+                <input type="number" id="partStock" required min="0" step="1" value="1">
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label for="partName">Reservedelsnavn *</label>
+              <input type="text" id="partName" required placeholder="F.eks. Bremseklodser for">
+            </div>
+
+            <div class="form-row-2">
+              <div class="control-group">
+                <label for="partBrand">Mærke *</label>
+                <select id="partBrand" required></select>
+              </div>
+
+              <div class="control-group">
+                <label for="partLocation">Lokation *</label>
+                <select id="partLocation" required></select>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label for="partCategory">Kategori / Underkategori *</label>
+              <select id="partCategory" required></select>
+            </div>
+
+            <div class="control-group">
+              <div class="compat-topbar">
+                <label>Kompatible modeller</label>
+                <button type="button" id="addCompatBtn" class="btn btn-secondary btn-sm">+ Tilføj model</button>
+              </div>
+              <div id="compatContainer" class="compat-stack"></div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" id="savePartBtn" class="btn btn-primary">Gem reservedel</button>
+              <button type="button" id="cancelEditBtn" class="btn btn-secondary hidden">Annuller redigering</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Liste -->
+        <section class="card-panel">
+          <div class="list-header">
+            <h2>Eksisterende dele (<span id="adminPartCount">0</span>)</h2>
+            <input type="text" id="adminSearch" placeholder="Filtrer dele...">
+          </div>
+          <div id="adminPartsList" class="admin-items"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- FANE 2: Mærker, Kategorier & Lokationer -->
+    <div id="tabPanelTaxonomy" class="tab-panel hidden">
+      <div class="taxonomy-layout">
+        <!-- Mærker -->
+        <section class="card-panel">
+          <h2>Bilmærker</h2>
+          <form id="addBrandForm" class="inline-form">
+            <input type="text" id="newBrandName" placeholder="F.eks. Mercedes-Benz" required>
+            <button type="submit" class="btn btn-primary">Tilføj</button>
+          </form>
+          <ul id="brandsManageList" class="manage-list"></ul>
+        </section>
+
+        <!-- Lokationer -->
+        <section class="card-panel">
+          <h2>Lokationer</h2>
+          <form id="addLocationForm" class="inline-form">
+            <input type="text" id="newLocationName" placeholder="F.eks. Reol C • Hylde 2" required>
+            <button type="submit" class="btn btn-primary">Tilføj</button>
+          </form>
+          <ul id="locationsManageList" class="manage-list"></ul>
+        </section>
+
+        <!-- Kategorier -->
+        <section class="card-panel taxonomy-wide">
+          <h2>Hovedkategorier &amp; Underkategorier</h2>
+          <div class="cat-forms">
+            <form id="addMainCatForm" class="inline-form">
+              <input type="text" id="newMainCatName" placeholder="Ny hovedkategori (f.eks. El & Lys)" required>
+              <button type="submit" class="btn btn-primary">Tilføj hovedkategori</button>
+            </form>
+
+            <form id="addSubCatForm" class="inline-form">
+              <select id="parentCatSelect" required></select>
+              <input type="text" id="newSubCatName" placeholder="Ny underkategori (f.eks. Forlygter)" required>
+              <button type="submit" class="btn btn-primary">Tilføj underkategori</button>
+            </form>
+          </div>
+          <div id="categoriesManageList" class="cat-grid"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
