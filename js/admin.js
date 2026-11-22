@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const STORAGE_KEY = 'autodele_catalog_final_v1';
+  const { url, anonKey } = window.SUPABASE_CONFIG || {};
+  const db = window.supabase.createClient(url, anonKey);
 
   let catalogData = {
     brands: [],
@@ -8,11 +9,20 @@ document.addEventListener('DOMContentLoaded', () => {
     parts: []
   };
 
+  // Auth & Sektions-elementer
+  const loginSection = document.getElementById('loginSection');
+  const adminAppSection = document.getElementById('adminAppSection');
+  const loginForm = document.getElementById('loginForm');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginError = document.getElementById('loginError');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // Admin UI-elementer
   const storageStatus = document.getElementById('storageStatus');
   const downloadJsonBtn = document.getElementById('downloadJsonBtn');
   const triggerImportBtn = document.getElementById('triggerImportBtn');
   const importJsonInput = document.getElementById('importJsonInput');
-  const resetStorageBtn = document.getElementById('resetStorageBtn');
 
   const tabBtnParts = document.getElementById('tabBtnParts');
   const tabBtnTaxonomy = document.getElementById('tabBtnTaxonomy');
@@ -21,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const formTitle = document.getElementById('formTitle');
   const partForm = document.getElementById('partForm');
-  const editIndex = document.getElementById('editIndex');
+  const editPartId = document.getElementById('editPartId');
   const partNumber = document.getElementById('partNumber');
   const partStock = document.getElementById('partStock');
   const partName = document.getElementById('partName');
@@ -66,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toast.textContent = text;
     toast.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 2300);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
   }
 
   function makeId(name, existingList) {
@@ -87,17 +97,83 @@ document.addEventListener('DOMContentLoaded', () => {
     return id;
   }
 
-  function updateStatus(isLocal) {
-    storageStatus.textContent = isLocal
-      ? 'Gemt lokalt i browseren – klik "Download parts.json" når du vil opdatere din projektfil.'
-      : 'Viser data indlæst direkte fra data/parts.json.';
+  // Login / Logout håndtering
+  async function checkSession() {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) {
+      showAdmin(session.user.email);
+    } else {
+      showLogin();
+    }
   }
 
-  function persist() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(catalogData));
-    updateStatus(true);
+  function showLogin() {
+    loginSection.classList.remove('hidden');
+    adminAppSection.classList.add('hidden');
+    logoutBtn.classList.add('hidden');
   }
 
+  async function showAdmin(userEmail) {
+    loginSection.classList.add('hidden');
+    adminAppSection.classList.remove('hidden');
+    logoutBtn.classList.remove('hidden');
+    storageStatus.textContent = `Logget ind som ${userEmail} • Live database aktiv`;
+    await loadAllData();
+    resetForm();
+  }
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.classList.add('hidden');
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email: loginEmail.value.trim(),
+      password: loginPassword.value
+    });
+
+    if (error) {
+      loginError.textContent = 'Forkert email eller adgangskode.';
+      loginError.classList.remove('hidden');
+      return;
+    }
+
+    loginForm.reset();
+    showAdmin(data.user.email);
+  });
+
+  logoutBtn.addEventListener('click', async () => {
+    await db.auth.signOut();
+    showLogin();
+    showToast('Du er logget ud');
+  });
+
+  // Hent alle data fra Supabase
+  async function loadAllData() {
+    const [brandsRes, catsRes, locsRes, partsRes] = await Promise.all([
+      db.from('brands').select('*').order('name'),
+      db.from('categories').select('*').order('name'),
+      db.from('locations').select('*').order('name'),
+      db.from('parts').select('*').order('id', { ascending: false })
+    ]);
+
+    catalogData.brands = brandsRes.data || [];
+    catalogData.categories = catsRes.data || [];
+    catalogData.locations = locsRes.data || [];
+    catalogData.parts = (partsRes.data || []).map(p => ({
+      id: p.id,
+      partNumber: p.part_number,
+      name: p.name,
+      brand: p.brand,
+      category: p.category,
+      location: p.location,
+      stock: p.stock,
+      compatibility: p.compatibility || []
+    }));
+
+    refreshUI();
+  }
+
+  // Faner
   function switchTab(tabName) {
     const isParts = tabName === 'parts';
     tabBtnParts.classList.toggle('active', isParts);
@@ -137,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const row = document.createElement('div');
     row.className = 'compat-row';
     row.innerHTML = `
-      <input type="text" class="c-model" placeholder="Model (f.eks. Golf V)" value="${esc(model)}">
+      <input type="text" class="c-model" placeholder="Model (f.eks. A3)" value="${esc(model)}">
       <input type="number" class="c-from" placeholder="Fra år" min="1960" max="2035" value="${esc(yearFrom)}">
       <input type="number" class="c-to" placeholder="Til år" min="1960" max="2035" value="${esc(yearTo)}">
       <button type="button" class="btn btn-danger btn-sm c-remove" aria-label="Fjern model">&times;</button>
@@ -148,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function resetForm() {
     partForm.reset();
-    editIndex.value = '-1';
+    editPartId.value = '';
     partStock.value = '1';
     formTitle.textContent = 'Tilføj ny reservedel';
     cancelEditBtn.classList.add('hidden');
@@ -156,11 +232,11 @@ document.addEventListener('DOMContentLoaded', () => {
     addCompatRow();
   }
 
-  function loadForEdit(idx) {
-    const part = catalogData.parts[idx];
+  function loadForEdit(partId) {
+    const part = catalogData.parts.find(p => p.id === partId);
     if (!part) return;
 
-    editIndex.value = String(idx);
+    editPartId.value = String(part.id);
     formTitle.textContent = `Rediger: ${part.partNumber}`;
     partNumber.value = part.partNumber || '';
     partName.value = part.name || '';
@@ -194,49 +270,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const q = adminSearch.value.trim().toLowerCase();
     adminPartCount.textContent = String(catalogData.parts.length);
 
-    const matches = catalogData.parts
-      .map((part, idx) => ({ part, idx }))
-      .filter(({ part }) => {
-        if (!q) return true;
-        return (
-          String(part.partNumber || '').toLowerCase().includes(q) ||
-          String(part.name || '').toLowerCase().includes(q) ||
-          getBrandName(part.brand).toLowerCase().includes(q) ||
-          getLocName(part.location).toLowerCase().includes(q)
-        );
-      });
+    const matches = catalogData.parts.filter(part => {
+      if (!q) return true;
+      return (
+        String(part.partNumber || '').toLowerCase().includes(q) ||
+        String(part.name || '').toLowerCase().includes(q) ||
+        getBrandName(part.brand).toLowerCase().includes(q) ||
+        getLocName(part.location).toLowerCase().includes(q)
+      );
+    });
 
     if (!matches.length) {
       adminPartsList.innerHTML = '<p style="color:var(--text-secondary);font-size:0.9rem;">Ingen dele fundet.</p>';
       return;
     }
 
-    adminPartsList.innerHTML = matches.map(({ part, idx }) => `
+    adminPartsList.innerHTML = matches.map(part => `
       <div class="admin-row">
         <div>
           <strong>${esc(part.partNumber)} – ${esc(part.name)}</strong>
           <small>${esc(getBrandName(part.brand))} • 📍 ${esc(getLocName(part.location))} • ${Number(part.stock || 0)} stk.</small>
         </div>
         <div class="row-btns">
-          <button type="button" class="btn btn-secondary btn-sm" data-edit="${idx}">Rediger</button>
-          <button type="button" class="btn btn-danger btn-sm" data-del="${idx}">Slet</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-edit-id="${part.id}">Rediger</button>
+          <button type="button" class="btn btn-danger btn-sm" data-del-id="${part.id}">Slet</button>
         </div>
       </div>
     `).join('');
   }
 
   function renderTaxonomies() {
-    brandsManageList.innerHTML = catalogData.brands.map((b, idx) => `
+    brandsManageList.innerHTML = catalogData.brands.map(b => `
       <li>
         <span>${esc(b.name)}</span>
-        <button type="button" class="btn btn-danger btn-sm" data-del-brand-idx="${idx}">Slet</button>
+        <button type="button" class="btn btn-danger btn-sm" data-del-brand="${esc(b.id)}">Slet</button>
       </li>
     `).join('');
 
-    locationsManageList.innerHTML = catalogData.locations.map((l, idx) => `
+    locationsManageList.innerHTML = catalogData.locations.map(l => `
       <li>
         <span>📍 ${esc(l.name)}</span>
-        <button type="button" class="btn btn-danger btn-sm" data-del-loc-idx="${idx}">Slet</button>
+        <button type="button" class="btn btn-danger btn-sm" data-del-loc="${esc(l.id)}">Slet</button>
       </li>
     `).join('');
 
@@ -247,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? subs.map(s => `
             <li>
               <span>↳ ${esc(s.name)}</span>
-              <button type="button" class="btn btn-danger btn-sm" data-del-cat-id="${esc(s.id)}">Slet</button>
+              <button type="button" class="btn btn-danger btn-sm" data-del-cat="${esc(s.id)}">Slet</button>
             </li>
           `).join('')
         : '<li style="color:var(--text-muted);font-size:0.82rem;">Ingen underkategorier</li>';
@@ -256,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="cat-box">
           <div class="cat-box-head">
             <span>${esc(p.name)}</span>
-            <button type="button" class="btn btn-danger btn-sm" data-del-cat-id="${esc(p.id)}">Slet</button>
+            <button type="button" class="btn btn-danger btn-sm" data-del-cat="${esc(p.id)}">Slet</button>
           </div>
           <ul class="sub-list">${subHtml}</ul>
         </div>
@@ -270,12 +344,12 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTaxonomies();
   }
 
-  // Formular-events (Reservedele)
+  // Gem / Opdater reservedel i Supabase
   addCompatBtn.addEventListener('click', () => addCompatRow());
   cancelEditBtn.addEventListener('click', resetForm);
   adminSearch.addEventListener('input', renderPartsList);
 
-  partForm.addEventListener('submit', (e) => {
+  partForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const compatibility = Array.from(compatContainer.querySelectorAll('.compat-row'))
@@ -286,230 +360,228 @@ document.addEventListener('DOMContentLoaded', () => {
       }))
       .filter(c => c.model && !Number.isNaN(c.yearFrom) && !Number.isNaN(c.yearTo));
 
-    const item = {
-      partNumber: partNumber.value.trim(),
+    const payload = {
+      part_number: partNumber.value.trim(),
       name: partName.value.trim(),
       brand: partBrand.value,
       category: partCategory.value,
-      location: partLocation.value,
+      location: partLocation.value || null,
       stock: Math.max(0, parseInt(partStock.value, 10) || 0),
       compatibility
     };
 
-    const idx = parseInt(editIndex.value, 10);
-    if (idx >= 0 && catalogData.parts[idx]) {
-      catalogData.parts[idx] = item;
-      showToast(`Opdaterede ${item.partNumber}`);
+    const existingId = editPartId.value ? Number(editPartId.value) : null;
+
+    if (existingId) {
+      const { error } = await db.from('parts').update(payload).eq('id', existingId);
+      if (error) return alert('Fejl ved opdatering: ' + error.message);
+      showToast(`Opdaterede ${payload.part_number}`);
     } else {
-      catalogData.parts.unshift(item);
-      showToast(`Tilføjede ${item.partNumber}`);
+      const { error } = await db.from('parts').insert([payload]);
+      if (error) return alert('Fejl ved oprettelse: ' + error.message);
+      showToast(`Tilføjede ${payload.part_number}`);
     }
 
-    persist();
     resetForm();
-    renderPartsList();
+    await loadAllData();
   });
 
-  adminPartsList.addEventListener('click', (e) => {
-    const editBtn = e.target.closest('[data-edit]');
+  adminPartsList.addEventListener('click', async (e) => {
+    const editBtn = e.target.closest('[data-edit-id]');
     if (editBtn) {
-      loadForEdit(Number(editBtn.dataset.edit));
+      loadForEdit(Number(editBtn.dataset.editId));
       return;
     }
 
-    const delBtn = e.target.closest('[data-del]');
+    const delBtn = e.target.closest('[data-del-id]');
     if (delBtn) {
-      const idx = Number(delBtn.dataset.del);
-      const part = catalogData.parts[idx];
+      const id = Number(delBtn.dataset.delId);
+      const part = catalogData.parts.find(p => p.id === id);
       if (!part) return;
-      if (confirm(`Slet "${part.partNumber} – ${part.name}"?`)) {
-        catalogData.parts.splice(idx, 1);
-        persist();
-        renderPartsList();
-        showToast('Reservedel slettet');
-      }
+      if (!confirm(`Slet "${part.partNumber} – ${part.name}" fra databasen?`)) return;
+
+      const { error } = await db.from('parts').delete().eq('id', id);
+      if (error) return alert('Kunne ikke slette: ' + error.message);
+      showToast('Reservedel slettet');
+      await loadAllData();
     }
   });
 
   // Tilføj / slet mærker
-  addBrandForm.addEventListener('submit', (e) => {
+  addBrandForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = newBrandName.value.trim();
     if (!name) return;
-    catalogData.brands.push({ id: makeId(name, catalogData.brands), name });
+    const id = makeId(name, catalogData.brands);
+    const { error } = await db.from('brands').insert([{ id, name }]);
+    if (error) return alert('Fejl: ' + error.message);
     newBrandName.value = '';
-    persist();
-    refreshUI();
     showToast(`Tilføjede mærke: ${name}`);
+    await loadAllData();
   });
 
-  brandsManageList.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-del-brand-idx]');
+  brandsManageList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-del-brand]');
     if (!btn) return;
-    const idx = Number(btn.dataset.delBrandIdx);
-    const brand = catalogData.brands[idx];
-    if (!brand) return;
-
-    if (catalogData.parts.some(p => p.brand === brand.id)) {
-      alert('Mærket bruges af eksisterende reservedele og kan ikke slettes.');
-      return;
-    }
-    catalogData.brands.splice(idx, 1);
-    persist();
-    refreshUI();
+    const id = btn.dataset.delBrand;
+    const { error } = await db.from('brands').delete().eq('id', id);
+    if (error) return alert('Kan ikke slette mærket (det bruges muligvis af eksisterende reservedele).');
     showToast('Mærke slettet');
+    await loadAllData();
   });
 
   // Tilføj / slet lokationer
-  addLocationForm.addEventListener('submit', (e) => {
+  addLocationForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = newLocationName.value.trim();
     if (!name) return;
-    catalogData.locations.push({ id: makeId(name, catalogData.locations), name });
+    const id = makeId(name, catalogData.locations);
+    const { error } = await db.from('locations').insert([{ id, name }]);
+    if (error) return alert('Fejl: ' + error.message);
     newLocationName.value = '';
-    persist();
-    refreshUI();
     showToast(`Tilføjede lokation: ${name}`);
+    await loadAllData();
   });
 
-  locationsManageList.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-del-loc-idx]');
+  locationsManageList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-del-loc]');
     if (!btn) return;
-    const idx = Number(btn.dataset.delLocIdx);
-    const loc = catalogData.locations[idx];
-    if (!loc) return;
-
-    if (catalogData.parts.some(p => p.location === loc.id)) {
-      alert('Lokationen er tilknyttet reservedele og kan ikke slettes.');
-      return;
-    }
-    catalogData.locations.splice(idx, 1);
-    persist();
-    refreshUI();
+    const id = btn.dataset.delLoc;
+    const { error } = await db.from('locations').delete().eq('id', id);
+    if (error) return alert('Fejl ved sletning: ' + error.message);
     showToast('Lokation slettet');
+    await loadAllData();
   });
 
   // Tilføj / slet kategorier
-  addMainCatForm.addEventListener('submit', (e) => {
+  addMainCatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = newMainCatName.value.trim();
     if (!name) return;
-    catalogData.categories.push({ id: makeId(name, catalogData.categories), name, parent: null });
+    const id = makeId(name, catalogData.categories);
+    const { error } = await db.from('categories').insert([{ id, name, parent: null }]);
+    if (error) return alert('Fejl: ' + error.message);
     newMainCatName.value = '';
-    persist();
-    refreshUI();
     showToast(`Tilføjede hovedkategori: ${name}`);
+    await loadAllData();
   });
 
-  addSubCatForm.addEventListener('submit', (e) => {
+  addSubCatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const parent = parentCatSelect.value;
     const name = newSubCatName.value.trim();
     if (!parent || !name) return;
-    catalogData.categories.push({ id: makeId(name, catalogData.categories), name, parent });
+    const id = makeId(name, catalogData.categories);
+    const { error } = await db.from('categories').insert([{ id, name, parent }]);
+    if (error) return alert('Fejl: ' + error.message);
     newSubCatName.value = '';
-    persist();
-    refreshUI();
     showToast(`Tilføjede underkategori: ${name}`);
+    await loadAllData();
   });
 
-  categoriesManageList.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-del-cat-id]');
+  categoriesManageList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-del-cat]');
     if (!btn) return;
-    const id = btn.dataset.delCatId;
-
-    if (catalogData.categories.some(c => c.parent === id)) {
-      alert('Slet underkategorierne først.');
-      return;
-    }
-    if (catalogData.parts.some(p => p.category === id)) {
-      alert('Kategorien bruges af eksisterende reservedele.');
-      return;
-    }
-    catalogData.categories = catalogData.categories.filter(c => c.id !== id);
-    persist();
-    refreshUI();
+    const id = btn.dataset.delCat;
+    const { error } = await db.from('categories').delete().eq('id', id);
+    if (error) return alert('Kan ikke slette (slet underkategorier eller tilknyttede reservedele først).');
     showToast('Kategori slettet');
+    await loadAllData();
   });
 
-  // Eksport, Import og Nulstil
+  // Backup download & masse-import af parts.json direkte ind i Supabase
   downloadJsonBtn.addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(catalogData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    const exportObj = {
+      brands: catalogData.brands,
+      categories: catalogData.categories,
+      locations: catalogData.locations,
+      parts: catalogData.parts.map(p => ({
+        partNumber: p.partNumber,
+        name: p.name,
+        brand: p.brand,
+        category: p.category,
+        location: p.location,
+        stock: p.stock,
+        compatibility: p.compatibility
+      }))
+    };
+    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+    const urlObj = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = 'parts.json';
+    link.href = urlObj;
+    link.download = 'parts-backup.json';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showToast('parts.json downloadet!');
+    URL.revokeObjectURL(urlObj);
+    showToast('Backup downloadet!');
   });
 
-  triggerImportBtn.addEventListener('click', () => {
-    importJsonInput.click();
-  });
+  triggerImportBtn.addEventListener('click', () => importJsonInput.click());
 
   importJsonInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
         const parsed = JSON.parse(ev.target.result);
         if (!Array.isArray(parsed.brands) || !Array.isArray(parsed.categories) || !Array.isArray(parsed.parts)) {
           throw new Error('Ugyldigt format');
         }
-        catalogData = {
-          brands: parsed.brands,
-          categories: parsed.categories,
-          locations: Array.isArray(parsed.locations) ? parsed.locations : [],
-          parts: parsed.parts
-        };
-        persist();
-        refreshUI();
+
+        showToast('Importerer til database...');
+
+        // 1. Upsert brands
+        if (parsed.brands.length) {
+          const { error } = await db.from('brands').upsert(parsed.brands, { onConflict: 'id' });
+          if (error) throw error;
+        }
+
+        // 2. Upsert hovedkategorier først, derefter underkategorier
+        const mainCats = parsed.categories.filter(c => !c.parent);
+        const subCats = parsed.categories.filter(c => c.parent);
+        if (mainCats.length) {
+          const { error } = await db.from('categories').upsert(mainCats, { onConflict: 'id' });
+          if (error) throw error;
+        }
+        if (subCats.length) {
+          const { error } = await db.from('categories').upsert(subCats, { onConflict: 'id' });
+          if (error) throw error;
+        }
+
+        // 3. Upsert lokationer
+        if (Array.isArray(parsed.locations) && parsed.locations.length) {
+          const { error } = await db.from('locations').upsert(parsed.locations, { onConflict: 'id' });
+          if (error) throw error;
+        }
+
+        // 4. Indsæt reservedele
+        if (parsed.parts.length) {
+          const rows = parsed.parts.map(p => ({
+            part_number: p.partNumber,
+            name: p.name,
+            brand: p.brand,
+            category: p.category,
+            location: p.location || null,
+            stock: Math.max(0, parseInt(p.stock, 10) || 0),
+            compatibility: p.compatibility || []
+          }));
+          const { error } = await db.from('parts').insert(rows);
+          if (error) throw error;
+        }
+
+        await loadAllData();
         resetForm();
-        showToast(`Importerede ${catalogData.parts.length} dele!`);
-      } catch {
-        alert('Filen er ikke en gyldig parts.json.');
+        showToast(`Importerede ${parsed.parts.length} dele til databasen!`);
+      } catch (err) {
+        console.error(err);
+        alert('Fejl ved import: ' + err.message);
       }
       importJsonInput.value = '';
     };
     reader.readAsText(file);
   });
 
-  resetStorageBtn.addEventListener('click', () => {
-    if (confirm('Nulstil alle lokale ændringer og indlæs data/parts.json på ny?')) {
-      localStorage.removeItem(STORAGE_KEY);
-      init();
-      showToast('Nulstillet til original fil');
-    }
-  });
-
-  async function init() {
-    try {
-      const local = localStorage.getItem(STORAGE_KEY);
-      if (local) {
-        catalogData = JSON.parse(local);
-        updateStatus(true);
-      } else {
-        const res = await fetch('data/parts.json');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        catalogData = await res.json();
-        updateStatus(false);
-      }
-      catalogData.brands = catalogData.brands || [];
-      catalogData.categories = catalogData.categories || [];
-      catalogData.locations = catalogData.locations || [];
-      catalogData.parts = catalogData.parts || [];
-
-      refreshUI();
-      resetForm();
-    } catch (err) {
-      console.error(err);
-      storageStatus.textContent = 'Fejl: Kunne ikke indlæse data/parts.json (åbn siden via lokal webserver).';
-    }
-  }
-
-  init();
+  checkSession();
 });

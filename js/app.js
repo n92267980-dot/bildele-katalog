@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const STORAGE_KEY = 'autodele_catalog_final_v1';
+  const { url, anonKey } = window.SUPABASE_CONFIG || {};
+  const db = window.supabase.createClient(url, anonKey);
 
   let catalogData = {
     brands: [],
@@ -343,7 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
   }
 
-  // Event listeners
   searchInput.addEventListener('input', render);
   clearSearchBtn.addEventListener('click', () => {
     searchInput.value = '';
@@ -380,9 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const card = e.target.closest('[data-card-idx]');
-    if (card) {
-      openModal(Number(card.dataset.cardIdx));
-    }
+    if (card) openModal(Number(card.dataset.cardIdx));
   });
 
   resultsGrid.addEventListener('keydown', (e) => {
@@ -405,25 +403,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function init() {
     try {
-      const local = localStorage.getItem(STORAGE_KEY);
-      if (local) {
-        catalogData = JSON.parse(local);
-      } else {
-        const res = await fetch('data/parts.json');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        catalogData = await res.json();
-      }
-      catalogData.brands = catalogData.brands || [];
-      catalogData.categories = catalogData.categories || [];
-      catalogData.locations = catalogData.locations || [];
-      catalogData.parts = catalogData.parts || [];
+      const [brandsRes, catsRes, locsRes, partsRes] = await Promise.all([
+        db.from('brands').select('*').order('name'),
+        db.from('categories').select('*').order('name'),
+        db.from('locations').select('*').order('name'),
+        db.from('parts').select('*').order('id', { ascending: false })
+      ]);
+
+      if (brandsRes.error) throw brandsRes.error;
+      if (catsRes.error) throw catsRes.error;
+      if (locsRes.error) throw locsRes.error;
+      if (partsRes.error) throw partsRes.error;
+
+      catalogData.brands = brandsRes.data || [];
+      catalogData.categories = catsRes.data || [];
+      catalogData.locations = locsRes.data || [];
+      catalogData.parts = (partsRes.data || []).map(p => ({
+        id: p.id,
+        partNumber: p.part_number,
+        name: p.name,
+        brand: p.brand,
+        category: p.category,
+        location: p.location,
+        stock: p.stock,
+        compatibility: p.compatibility || []
+      }));
 
       updateStats();
       populateDropdowns();
       render();
     } catch (err) {
       console.error(err);
-      resultsCount.textContent = 'Fejl: Kunne ikke hente data/parts.json (åbn siden via lokal webserver).';
+      resultsCount.textContent = 'Fejl ved forbindelse til databasen. Tjek js/config.js.';
     }
   }
 

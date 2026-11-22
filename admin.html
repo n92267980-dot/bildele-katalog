@@ -15,28 +15,48 @@
         </span>
         <span><span class="brand-accent">AUTO</span>DELE <span class="admin-badge">ADMIN</span></span>
       </a>
-      <nav class="topbar-nav">
+      <nav class="topbar-nav" style="display:flex;gap:0.5rem;align-items:center;">
         <a href="index.html" class="btn btn-secondary btn-sm">&larr; Tilbage til katalog</a>
+        <button type="button" id="logoutBtn" class="btn btn-danger btn-sm hidden">Log ud</button>
       </nav>
     </div>
   </header>
 
-  <main class="container admin-container">
-    <!-- Data værktøjslinje -->
+  <!-- LOGIN SKÆRM -->
+  <main id="loginSection" class="container login-wrapper">
+    <section class="card-panel login-card">
+      <div class="hero-badge">Adgang begrænset</div>
+      <h1>Log ind på lageradministration</h1>
+      <p class="login-sub">Indtast din email og adgangskode for at tilføje, redigere eller slette reservedele.</p>
+      <form id="loginForm" class="form-layout">
+        <div class="control-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required placeholder="din@email.dk" autocomplete="email">
+        </div>
+        <div class="control-group">
+          <label for="loginPassword">Adgangskode</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <p id="loginError" class="login-error hidden"></p>
+        <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width:100%;">Log ind</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- ADMIN PANEL (vises først når man er logget ind) -->
+  <main id="adminAppSection" class="container admin-container hidden">
     <section class="admin-banner">
       <div>
-        <h1>Administration af lager &amp; katalog</h1>
-        <p id="storageStatus">Indlæser data...</p>
+        <h1>Administration af live database</h1>
+        <p id="storageStatus">Forbundet til database.</p>
       </div>
       <div class="admin-banner-actions">
-        <button type="button" id="downloadJsonBtn" class="btn btn-primary">Download parts.json</button>
-        <button type="button" id="triggerImportBtn" class="btn btn-secondary">Importer parts.json</button>
+        <button type="button" id="downloadJsonBtn" class="btn btn-secondary">Backup: Download JSON</button>
+        <button type="button" id="triggerImportBtn" class="btn btn-primary">Importer parts.json til DB</button>
         <input type="file" id="importJsonInput" accept=".json,application/json" class="hidden">
-        <button type="button" id="resetStorageBtn" class="btn btn-danger">Nulstil til original fil</button>
       </div>
     </section>
 
-    <!-- Faner -->
     <div class="admin-tabs">
       <button type="button" id="tabBtnParts" class="tab-btn active">1. Reservedele</button>
       <button type="button" id="tabBtnTaxonomy" class="tab-btn">2. Mærker, Kategorier &amp; Lokationer</button>
@@ -45,16 +65,15 @@
     <!-- FANE 1: Reservedele -->
     <div id="tabPanelParts" class="tab-panel">
       <div class="admin-split">
-        <!-- Formular -->
         <section class="card-panel">
           <h2 id="formTitle">Tilføj ny reservedel</h2>
           <form id="partForm" class="form-layout">
-            <input type="hidden" id="editIndex" value="-1">
+            <input type="hidden" id="editPartId" value="">
 
             <div class="form-row-2">
               <div class="control-group">
                 <label for="partNumber">Varenummer *</label>
-                <input type="text" id="partNumber" required placeholder="F.eks. 1K0698151">
+                <input type="text" id="partNumber" required placeholder="F.eks. 245165">
               </div>
 
               <div class="control-group">
@@ -65,7 +84,7 @@
 
             <div class="control-group">
               <label for="partName">Reservedelsnavn *</label>
-              <input type="text" id="partName" required placeholder="F.eks. Bremseklodser for">
+              <input type="text" id="partName" required placeholder="F.eks. Tændspole Bobine – A3/A4">
             </div>
 
             <div class="form-row-2">
@@ -94,16 +113,15 @@
             </div>
 
             <div class="form-actions">
-              <button type="submit" id="savePartBtn" class="btn btn-primary">Gem reservedel</button>
+              <button type="submit" id="savePartBtn" class="btn btn-primary">Gem i database</button>
               <button type="button" id="cancelEditBtn" class="btn btn-secondary hidden">Annuller redigering</button>
             </div>
           </form>
         </section>
 
-        <!-- Liste -->
         <section class="card-panel">
           <div class="list-header">
-            <h2>Eksisterende dele (<span id="adminPartCount">0</span>)</h2>
+            <h2>Dele i database (<span id="adminPartCount">0</span>)</h2>
             <input type="text" id="adminSearch" placeholder="Filtrer dele...">
           </div>
           <div id="adminPartsList" class="admin-items"></div>
@@ -114,7 +132,6 @@
     <!-- FANE 2: Mærker, Kategorier & Lokationer -->
     <div id="tabPanelTaxonomy" class="tab-panel hidden">
       <div class="taxonomy-layout">
-        <!-- Mærker -->
         <section class="card-panel">
           <h2>Bilmærker</h2>
           <form id="addBrandForm" class="inline-form">
@@ -124,28 +141,26 @@
           <ul id="brandsManageList" class="manage-list"></ul>
         </section>
 
-        <!-- Lokationer -->
         <section class="card-panel">
           <h2>Lokationer</h2>
           <form id="addLocationForm" class="inline-form">
-            <input type="text" id="newLocationName" placeholder="F.eks. Reol C • Hylde 2" required>
+            <input type="text" id="newLocationName" placeholder="F.eks. 10, F" required>
             <button type="submit" class="btn btn-primary">Tilføj</button>
           </form>
           <ul id="locationsManageList" class="manage-list"></ul>
         </section>
 
-        <!-- Kategorier -->
         <section class="card-panel taxonomy-wide">
           <h2>Hovedkategorier &amp; Underkategorier</h2>
           <div class="cat-forms">
             <form id="addMainCatForm" class="inline-form">
-              <input type="text" id="newMainCatName" placeholder="Ny hovedkategori (f.eks. El & Lys)" required>
+              <input type="text" id="newMainCatName" placeholder="Ny hovedkategori" required>
               <button type="submit" class="btn btn-primary">Tilføj hovedkategori</button>
             </form>
 
             <form id="addSubCatForm" class="inline-form">
               <select id="parentCatSelect" required></select>
-              <input type="text" id="newSubCatName" placeholder="Ny underkategori (f.eks. Forlygter)" required>
+              <input type="text" id="newSubCatName" placeholder="Ny underkategori" required>
               <button type="submit" class="btn btn-primary">Tilføj underkategori</button>
             </form>
           </div>
@@ -157,6 +172,8 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

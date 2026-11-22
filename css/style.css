@@ -1035,3 +1035,55 @@ table.compat-tbl th {
   font-size: 0.86rem;
   color: var(--text-secondary);
 }
+/* Login-skærm & email/password inputs */
+input[type="email"],
+input[type="password"] {
+  height: 42px;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.94rem;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.login-wrapper {
+  min-height: calc(100vh - 64px);
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 430px;
+  padding: 2rem;
+}
+
+.login-card h1 {
+  font-size: 1.45rem;
+  margin-bottom: 0.4rem;
+}
+
+.login-sub {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.35rem;
+}
+
+.login-error {
+  background: var(--bad-bg);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  font-size: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+}
