@@ -1087,3 +1087,29 @@ input[type="password"]:focus {
   padding: 0.65rem 0.85rem;
   border-radius: var(--radius-sm);
 }
+/* Hurtig lagerjustering (+1 / -1) */
+.stock-step-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.stock-step-btn {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 0.45rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stock-count-badge {
+  min-width: 58px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.32rem 0.45rem;
+}
