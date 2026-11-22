@@ -1,0 +1,333 @@
+{
+  "brands": [
+    { "id": "vw", "name": "Volkswagen" },
+    { "id": "audi", "name": "Audi" },
+    { "id": "bmw", "name": "BMW" },
+    { "id": "toyota", "name": "Toyota" }
+  ],
+  "categories": [
+    { "id": "bremser", "name": "Bremser", "parent": null },
+    { "id": "bremseklodser", "name": "Bremseklodser", "parent": "bremser" },
+    { "id": "bremseskiver", "name": "Bremseskiver", "parent": "bremser" },
+    { "id": "bremsekalibre", "name": "Bremsekalibre", "parent": "bremser" },
+
+    { "id": "motor-filtre", "name": "Motor & Filtre", "parent": null },
+    { "id": "oliefiltre", "name": "Oliefiltre", "parent": "motor-filtre" },
+    { "id": "luftfiltre", "name": "Luftfiltre", "parent": "motor-filtre" },
+    { "id": "tandremme", "name": "Tandremssæt", "parent": "motor-filtre" },
+
+    { "id": "undervogn", "name": "Undervogn & Styretøj", "parent": null },
+    { "id": "stoddaempere", "name": "Støddæmpere", "parent": "undervogn" },
+    { "id": "baerekugler", "name": "Bærekugler & Bærearme", "parent": "undervogn" }
+  ],
+  "locations": [
+    { "id": "reol-a1", "name": "Reol A • Hylde 1" },
+    { "id": "reol-a2", "name": "Reol A • Hylde 2" },
+    { "id": "reol-b1", "name": "Reol B • Hylde 1" },
+    { "id": "reol-b2", "name": "Reol B • Hylde 2" },
+    { "id": "kasse-3", "name": "Plastkasse #3" }
+  ],
+  "parts": [
+    {
+      "partNumber": "1K0698151",
+      "name": "Bremseklodser for",
+      "brand": "vw",
+      "category": "bremseklodser",
+      "location": "reol-a1",
+      "stock": 12,
+      "compatibility": [
+        { "model": "Golf V", "yearFrom": 2003, "yearTo": 2008 },
+        { "model": "Golf VI", "yearFrom": 2008, "yearTo": 2012 },
+        { "model": "Passat B6", "yearFrom": 2005, "yearTo": 2010 }
+      ]
+    },
+    {
+      "partNumber": "1K0615301AA",
+      "name": "Bremseskive for 312mm ventileret",
+      "brand": "vw",
+      "category": "bremseskiver",
+      "location": "reol-a1",
+      "stock": 6,
+      "compatibility": [
+        { "model": "Golf V", "yearFrom": 2004, "yearTo": 2008 },
+        { "model": "Passat B6", "yearFrom": 2005, "yearTo": 2010 }
+      ]
+    },
+    {
+      "partNumber": "5Q0698451",
+      "name": "Bremseklodser bag",
+      "brand": "vw",
+      "category": "bremseklodser",
+      "location": "reol-a1",
+      "stock": 8,
+      "compatibility": [
+        { "model": "Golf VII", "yearFrom": 2012, "yearTo": 2020 },
+        { "model": "Tiguan", "yearFrom": 2016, "yearTo": 2023 }
+      ]
+    },
+    {
+      "partNumber": "03L115562",
+      "name": "Oliefilter indsats 2.0 TDI",
+      "brand": "vw",
+      "category": "oliefiltre",
+      "location": "reol-b1",
+      "stock": 25,
+      "compatibility": [
+        { "model": "Golf VI", "yearFrom": 2008, "yearTo": 2012 },
+        { "model": "Passat B7", "yearFrom": 2010, "yearTo": 2014 },
+        { "model": "Tiguan", "yearFrom": 2008, "yearTo": 2015 }
+      ]
+    },
+    {
+      "partNumber": "1K0129620D",
+      "name": "Luftfilter rektangulært",
+      "brand": "vw",
+      "category": "luftfiltre",
+      "location": "reol-b1",
+      "stock": 14,
+      "compatibility": [
+        { "model": "Golf V", "yearFrom": 2003, "yearTo": 2008 },
+        { "model": "Golf VI", "yearFrom": 2008, "yearTo": 2012 }
+      ]
+    },
+    {
+      "partNumber": "03L198119F",
+      "name": "Tandremssæt inkl. vandpumpe",
+      "brand": "vw",
+      "category": "tandremme",
+      "location": "reol-b2",
+      "stock": 3,
+      "compatibility": [
+        { "model": "Passat B7", "yearFrom": 2010, "yearTo": 2014 },
+        { "model": "Golf VI", "yearFrom": 2009, "yearTo": 2012 }
+      ]
+    },
+    {
+      "partNumber": "1K0413031BK",
+      "name": "Støddæmper for gastryk",
+      "brand": "vw",
+      "category": "stoddaempere",
+      "location": "reol-a2",
+      "stock": 0,
+      "compatibility": [
+        { "model": "Golf V", "yearFrom": 2003, "yearTo": 2008 },
+        { "model": "Golf VI", "yearFrom": 2008, "yearTo": 2012 }
+      ]
+    },
+    {
+      "partNumber": "8K0698151F",
+      "name": "Bremseklodser for med slidindikator",
+      "brand": "audi",
+      "category": "bremseklodser",
+      "location": "reol-a1",
+      "stock": 9,
+      "compatibility": [
+        { "model": "A4 B8", "yearFrom": 2007, "yearTo": 2015 },
+        { "model": "A5", "yearFrom": 2007, "yearTo": 2016 }
+      ]
+    },
+    {
+      "partNumber": "8K0615301",
+      "name": "Bremseskive for 320mm",
+      "brand": "audi",
+      "category": "bremseskiver",
+      "location": "reol-a1",
+      "stock": 4,
+      "compatibility": [
+        { "model": "A4 B8", "yearFrom": 2007, "yearTo": 2015 },
+        { "model": "Q5", "yearFrom": 2008, "yearTo": 2016 }
+      ]
+    },
+    {
+      "partNumber": "8E0615423G",
+      "name": "Bremsekaliber bag venstre",
+      "brand": "audi",
+      "category": "bremsekalibre",
+      "location": "kasse-3",
+      "stock": 2,
+      "compatibility": [
+        { "model": "A4 B6", "yearFrom": 2000, "yearTo": 2004 },
+        { "model": "A4 B7", "yearFrom": 2004, "yearTo": 2008 }
+      ]
+    },
+    {
+      "partNumber": "06J115403Q",
+      "name": "Oliefilter spin-on 1.8 / 2.0 TFSI",
+      "brand": "audi",
+      "category": "oliefiltre",
+      "location": "reol-b1",
+      "stock": 18,
+      "compatibility": [
+        { "model": "A4 B8", "yearFrom": 2008, "yearTo": 2015 },
+        { "model": "A3 8P", "yearFrom": 2008, "yearTo": 2012 }
+      ]
+    },
+    {
+      "partNumber": "8K0133843E",
+      "name": "Luftfilter cylinderformet",
+      "brand": "audi",
+      "category": "luftfiltre",
+      "location": "reol-b1",
+      "stock": 7,
+      "compatibility": [
+        { "model": "A4 B8", "yearFrom": 2007, "yearTo": 2015 },
+        { "model": "A5", "yearFrom": 2007, "yearTo": 2016 }
+      ]
+    },
+    {
+      "partNumber": "8K0407151F",
+      "name": "Bærearm for nederst venstre",
+      "brand": "audi",
+      "category": "baerekugler",
+      "location": "reol-a2",
+      "stock": 5,
+      "compatibility": [
+        { "model": "A4 B8", "yearFrom": 2007, "yearTo": 2015 },
+        { "model": "Q5", "yearFrom": 2008, "yearTo": 2016 }
+      ]
+    },
+    {
+      "partNumber": "34116794917",
+      "name": "Bremseklodser for",
+      "brand": "bmw",
+      "category": "bremseklodser",
+      "location": "reol-a1",
+      "stock": 10,
+      "compatibility": [
+        { "model": "3-serie F30", "yearFrom": 2011, "yearTo": 2018 },
+        { "model": "1-serie F20", "yearFrom": 2011, "yearTo": 2019 }
+      ]
+    },
+    {
+      "partNumber": "34116792219",
+      "name": "Bremseskive for 312x24mm",
+      "brand": "bmw",
+      "category": "bremseskiver",
+      "location": "reol-a1",
+      "stock": 0,
+      "compatibility": [
+        { "model": "3-serie F30", "yearFrom": 2011, "yearTo": 2018 }
+      ]
+    },
+    {
+      "partNumber": "34216768697",
+      "name": "Bremsekaliber bag højre",
+      "brand": "bmw",
+      "category": "bremsekalibre",
+      "location": "kasse-3",
+      "stock": 1,
+      "compatibility": [
+        { "model": "3-serie E90", "yearFrom": 2005, "yearTo": 2011 }
+      ]
+    },
+    {
+      "partNumber": "11428507683",
+      "name": "Oliefilter inkl. pakninger N47/B47",
+      "brand": "bmw",
+      "category": "oliefiltre",
+      "location": "reol-b1",
+      "stock": 30,
+      "compatibility": [
+        { "model": "3-serie F30", "yearFrom": 2011, "yearTo": 2018 },
+        { "model": "5-serie F10", "yearFrom": 2010, "yearTo": 2017 },
+        { "model": "1-serie F20", "yearFrom": 2011, "yearTo": 2019 }
+      ]
+    },
+    {
+      "partNumber": "13718511668",
+      "name": "Luftfilter motor",
+      "brand": "bmw",
+      "category": "luftfiltre",
+      "location": "reol-b1",
+      "stock": 11,
+      "compatibility": [
+        { "model": "3-serie F30", "yearFrom": 2011, "yearTo": 2018 },
+        { "model": "1-serie F20", "yearFrom": 2011, "yearTo": 2019 }
+      ]
+    },
+    {
+      "partNumber": "31316791551",
+      "name": "Støddæmper for",
+      "brand": "bmw",
+      "category": "stoddaempere",
+      "location": "reol-a2",
+      "stock": 4,
+      "compatibility": [
+        { "model": "3-serie F30", "yearFrom": 2011, "yearTo": 2018 }
+      ]
+    },
+    {
+      "partNumber": "31126852991",
+      "name": "Bærearm for venstre",
+      "brand": "bmw",
+      "category": "baerekugler",
+      "location": "reol-a2",
+      "stock": 6,
+      "compatibility": [
+        { "model": "3-serie F30", "yearFrom": 2011, "yearTo": 2018 },
+        { "model": "1-serie F20", "yearFrom": 2011, "yearTo": 2019 }
+      ]
+    },
+    {
+      "partNumber": "0446502220",
+      "name": "Bremseklodser for sæt",
+      "brand": "toyota",
+      "category": "bremseklodser",
+      "location": "reol-a1",
+      "stock": 15,
+      "compatibility": [
+        { "model": "Auris", "yearFrom": 2007, "yearTo": 2012 },
+        { "model": "Corolla", "yearFrom": 2007, "yearTo": 2013 }
+      ]
+    },
+    {
+      "partNumber": "4351202180",
+      "name": "Bremseskive for 275mm",
+      "brand": "toyota",
+      "category": "bremseskiver",
+      "location": "reol-a1",
+      "stock": 8,
+      "compatibility": [
+        { "model": "Auris", "yearFrom": 2007, "yearTo": 2012 },
+        { "model": "Yaris", "yearFrom": 2011, "yearTo": 2019 }
+      ]
+    },
+    {
+      "partNumber": "90915YZZJ1",
+      "name": "Oliefilter original type",
+      "brand": "toyota",
+      "category": "oliefiltre",
+      "location": "reol-b1",
+      "stock": 40,
+      "compatibility": [
+        { "model": "Yaris", "yearFrom": 2005, "yearTo": 2020 },
+        { "model": "Auris", "yearFrom": 2007, "yearTo": 2018 },
+        { "model": "Avensis", "yearFrom": 2003, "yearTo": 2015 }
+      ]
+    },
+    {
+      "partNumber": "178010D060",
+      "name": "Luftfilter",
+      "brand": "toyota",
+      "category": "luftfiltre",
+      "location": "reol-b1",
+      "stock": 16,
+      "compatibility": [
+        { "model": "Auris", "yearFrom": 2007, "yearTo": 2018 },
+        { "model": "Avensis", "yearFrom": 2009, "yearTo": 2018 }
+      ]
+    },
+    {
+      "partNumber": "4333009510",
+      "name": "Bærekugle for nederst",
+      "brand": "toyota",
+      "category": "baerekugler",
+      "location": "kasse-3",
+      "stock": 0,
+      "compatibility": [
+        { "model": "Avensis", "yearFrom": 2003, "yearTo": 2008 },
+        { "model": "Corolla", "yearFrom": 2002, "yearTo": 2007 }
+      ]
+    }
+  ]
+}
